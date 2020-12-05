@@ -25,7 +25,7 @@ const App = () => {
     const allPeople = await result.query().fetch();
 
     setPeople(allPeople);
-    console.log('result', allPeople);
+    //console.log('result', allPeople);
   };
 
   const addPeople = async () => {
@@ -36,12 +36,29 @@ const App = () => {
         entry.name = name;
         entry.years = Number(years);
         entry.adult = Number(years) > 17 ? true : false;
+
+        console.log('create: ', entry);
       });
     });
 
     setName('');
     setYears('');
     setReload(reload + 1);
+  };
+
+  const deletePeople = async (id = '') => {
+    console.log('deleted: ', id);
+
+    const result = database.collections.get('Pessoa');
+
+    await database.action(async () => {
+      const findPeople = await result.find(id);
+
+      await findPeople.markAsDeleted();
+      await findPeople.destroyPermanently();
+    });
+
+    getPeople();
   };
 
   return (
@@ -65,13 +82,20 @@ const App = () => {
       <View style={styles.container}>
         <ScrollView>
           {people.map((p) => (
-            <View key={p.id} style={styles.cards}>
-              <Text>Id: {p.id} </Text>
-              <Text>Nome: {p.name} </Text>
-              <Text>Idade: {p.years} </Text>
-              {(p.adult === true || p.adult === false) && (
-                <Text>Adulto: {p.adult === true ? 'sim' : 'não'} </Text>
-              )}
+            <View key={p.id} style={styles.containerCards}>
+              <View style={styles.cards}>
+                <Text>Id: {p.id} </Text>
+                <Text>Nome: {p.name} </Text>
+                <Text>Idade: {p.years} </Text>
+                {(p.adult === true || p.adult === false) && (
+                  <Text>Adulto: {p.adult === true ? 'sim' : 'não'} </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => deletePeople(p.id)}
+                style={[styles.button, {marginLeft: 5, height: 35}]}>
+                <Text style={styles.textButtonRemove}>Excluir</Text>
+              </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
@@ -88,6 +112,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
+  containerCards: {
+    flexDirection: 'row',
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cards: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: '#969696',
+    padding: 5,
+  },
   button: {
     borderWidth: 1,
     borderColor: '#969696',
@@ -95,13 +131,7 @@ const styles = StyleSheet.create({
     padding: 5,
     marginVertical: 1,
   },
-  cards: {
-    margin: 2,
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: '#969696',
-    padding: 5,
-  },
+  textButtonRemove: {color: 'red'},
 });
 
 export default App;
