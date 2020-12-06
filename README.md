@@ -16,9 +16,8 @@
 - [x] read data
 - [x] save data
 - [x] delete data
-- [ ] update data
+- [x] update data
 
 ### screenshots
 
-![WhatsApp Image 2020-12-04 at 21 47 22](https://user-images.githubusercontent.com/35678887/101228545-eb81e280-367a-11eb-89fc-3554deda0519.jpeg)
-
+![Captura de Tela 2020-12-06 às 12 47 11](https://user-images.githubusercontent.com/35678887/101284896-3ad22b00-37c1-11eb-9d2a-8cc32c0c9ee7.png)

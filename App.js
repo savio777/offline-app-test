@@ -12,15 +12,17 @@ import {database} from './models';
 
 const App = () => {
   const [people, setPeople] = useState([]);
+  const [idEdit, setIdEdit] = useState('');
   const [name, setName] = useState('');
   const [years, setYears] = useState('');
   const [reload, setReload] = useState(0);
+  const [enableCreate, setEnableCreate] = useState(true);
 
   useEffect(() => {
-    getPeople();
+    getPeoples();
   }, [reload]);
 
-  const getPeople = async () => {
+  const getPeoples = async () => {
     const result = database.collections.get('Pessoa');
     const allPeople = await result.query().fetch();
 
@@ -32,12 +34,12 @@ const App = () => {
     const result = database.collections.get('Pessoa');
 
     await database.action(async () => {
-      await result.create((entry) => {
-        entry.name = name;
-        entry.years = Number(years);
-        entry.adult = Number(years) > 17 ? true : false;
+      await result.create((newPeople) => {
+        newPeople.name = name;
+        newPeople.years = Number(years);
+        newPeople.adult = Number(years) > 17 ? true : false;
 
-        console.log('create: ', entry);
+        console.log('create: ', newPeople);
       });
     });
 
@@ -58,25 +60,65 @@ const App = () => {
       await findPeople.destroyPermanently();
     });
 
-    getPeople();
+    getPeoples();
+  };
+
+  const getPeople = async (id = '') => {
+    console.log('get: ', id);
+
+    const result = database.collections.get('Pessoa');
+
+    const findPeople = await result.find(id);
+
+    setIdEdit(findPeople.id);
+    setName(findPeople.name);
+    setYears(String(findPeople.years));
+    setEnableCreate(false);
+  };
+
+  const editPeople = async () => {
+    console.log('edited: ', idEdit);
+
+    const result = database.collections.get('Pessoa');
+
+    const findPeople = await result.find(idEdit);
+
+    await database.action(async () => {
+      await findPeople.update((peopleUpdt) => {
+        peopleUpdt.name = name;
+        peopleUpdt.years = Number(years);
+        peopleUpdt.adult = Number(years) > 17 ? true : false;
+
+        console.log('updated: ', peopleUpdt);
+      });
+    });
+
+    setName('');
+    setYears('');
+    setReload(reload + 1);
+    setEnableCreate(true);
   };
 
   return (
     <>
       <View style={styles.inputContainer}>
         <TextInput
+          style={styles.input}
           placeholder="Nome"
           value={name}
           onChangeText={(value) => setName(value)}
         />
         <TextInput
+          style={styles.input}
           placeholder="Idade"
           value={years}
           onChangeText={(value) => setYears(value)}
           keyboardType="numeric"
         />
-        <TouchableOpacity style={styles.button} onPress={() => addPeople()}>
-          <Text>cadastrar</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => (enableCreate ? addPeople() : editPeople())}>
+          <Text>{enableCreate ? 'Cadastrar' : 'Atualizar'}</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -91,11 +133,18 @@ const App = () => {
                   <Text>Adulto: {p.adult === true ? 'sim' : 'não'} </Text>
                 )}
               </View>
-              <TouchableOpacity
-                onPress={() => deletePeople(p.id)}
-                style={[styles.button, {marginLeft: 5, height: 35}]}>
-                <Text style={styles.textButtonRemove}>Excluir</Text>
-              </TouchableOpacity>
+              <View>
+                <TouchableOpacity
+                  onPress={() => getPeople(p.id)}
+                  style={[styles.button, styles.buttonActionsBD]}>
+                  <Text style={styles.textButtonEdit}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => deletePeople(p.id)}
+                  style={[styles.button, styles.buttonActionsBD]}>
+                  <Text style={styles.textButtonRemove}>Excluir</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
         </ScrollView>
@@ -112,6 +161,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
+  input: {borderBottomWidth: 1, borderColor: '#969696', marginBottom: 5},
   containerCards: {
     flexDirection: 'row',
     margin: 2,
@@ -131,7 +181,9 @@ const styles = StyleSheet.create({
     padding: 5,
     marginVertical: 1,
   },
+  buttonActionsBD: {marginLeft: 5, height: 35, alignItems: 'center'},
   textButtonRemove: {color: 'red'},
+  textButtonEdit: {color: '#000'},
 });
 
 export default App;
